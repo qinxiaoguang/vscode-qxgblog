@@ -1,0 +1,153 @@
+{
+  "name": "qxgblog",
+  "displayName": "qxgblog",
+  "description": "qxgblog",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "qxgblog.editmd",
+        "displayName": "dispalyname",
+        "selector": [
+          {
+            "filenamePattern": ""
+          }
+        ]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "package-explorer",
+          "title": "qxgblog",
+          "icon": "media/blog.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "qxgblog.qxgblog",
+        "title": "qxgblog"
+      },
+      {
+        "command": "qxgblog.add",
+        "title": "add",
+        "icon": {
+          "light": "media/dark_add.svg",
+          "dark": "media/light_add.svg"
+        }
+      },
+
+      {
+        "command": "qxgblog.refresh",
+        "title": "Refresh",
+        "icon": {
+          "light": "media/dark_refresh.svg",
+          "dark": "media/light_refresh.svg"
+        }
+      },
+      {
+        "command": "qxgblog.openarticle",
+        "title": "Open article"
+      },
+      {
+        "command": "qxgblog.save",
+        "title": "save article",
+        "icon":"media/light_save.svg"
+      },
+      {
+        "command": "qxgblog.release",
+        "title": "release article"
+      },
+      {
+        "command": "qxgblog.delete",
+        "title": "delete article"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "qxgblog.refresh",
+          "when": "true",
+          "group": "navigation"
+        },
+        {
+          "command": "qxgblog.add",
+          "when": "true",
+          "group": "navigation"
+        }
+
+      ],
+      "editor/title": [
+        {
+          "command": "qxgblog.save",
+          "when": "true",
+          "group": "navigation"
+        },
+        {
+          "command": "qxgblog.release",
+          "when": "true"
+        },
+        {
+          "command": "qxgblog.delete",
+          "when": "true"
+        }
+
+      ],
+      "commandPalette": [
+        {
+          "command": "qxgblog.save",
+          "when": "true"
+        },
+        {
+          "command": "qxgblog.release",
+          "when": "true"
+        },
+        {
+          "command": "qxgblog.delete",
+          "when": "true"
+        }
+      ]
+    },
+    "views": {
+      "package-explorer": [
+        {
+          "id": "qxgblog",
+          "name": "qxgblog"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "20.2.5",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "@vscode/test-electron": "^2.3.2",
+    "eslint": "^8.41.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.1.3"
+  },
+  "dependencies": {
+    "axios": "^1.4.0"
+  }
+}

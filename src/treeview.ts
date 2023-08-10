@@ -4,6 +4,10 @@ import axios from 'axios';
 import { endianness } from 'os';
 import { open, readFileSync } from 'fs';
 import { existsSync,mkdirSync, writeFileSync, promises as fsPromises } from 'fs';
+import getClipboardImage from './get_img_clipboard';
+import { globalCtx } from './globalctx';
+import fs = require('fs');
+import FormData = require('form-data');
 
 interface ArticleTitle {
 	name: string;  // 文章名字
@@ -386,8 +390,10 @@ export class ArticleTocExplorer {
 	private provider:ArticleTocTreeDataProvider;
 
 	constructor(context: vscode.ExtensionContext) {
+		vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 		this.output = vscode.window.createOutputChannel("blog manager");
 		this.context = context;
+		globalCtx.extCtx = context;
 		// 更新文章到本地
 		// 获取文章保留地址
 		let path: string | undefined = context.globalState.get("BLOG_PATH");
@@ -432,7 +438,82 @@ export class ArticleTocExplorer {
 			}
 		} );
 
+		vscode.commands.registerCommand('qxgblog.upload_img-clipboard',async ()=> {
+			console.log("start");
+			//vscode.window.showInformationMessage("start");
+			//vscode.window.showInformationMessage("context path",this.context.asAbsolutePath("dist.png"));
+			const img = await getClipboardImage();
+			if (img.imgPath === 'no image') {
+				vscode.window.showErrorMessage("no image");
+        		return
+    		}
+			return this.uploadImg(img.imgPath,true)
+		});
+
+		vscode.commands.registerCommand('qxgblog.upload_img-file',async ()=> {
+			const uriList = await vscode.window.showOpenDialog({
+				title: '选择要上传的图片(图片不能超过20M)',
+				canSelectMany: false,
+				canSelectFolders: false,
+				filters: {
+					images: ['png', 'jpg', 'jpeg', 'bmp', 'webp', 'svg', 'gif'],
+				},
+			})
+			if (uriList === undefined) return
+			const imageFileUri = uriList[0]
+
+			const imageFilePath = imageFileUri.fsPath
+			this.uploadImg(imageFilePath,false)
+		});
 	}
+
+	private async uploadImg(imgpath:string,deleteImg:boolean){
+		return vscode.window.withProgress({ title: '正在上传图片', location: vscode.ProgressLocation.Notification }, async p => {
+        		p.report({ increment: 20 })
+				const file = fs.createReadStream(imgpath);
+        		p.report({ increment: 60 })
+				const form = new FormData();
+				form.append('file',file);
+        		p.report({ increment: 80 })
+            	const url = vscode.Uri.file(imgpath)
+				var cookie:string|undefined = this.context.globalState.get("cookie")
+				if (!cookie) {
+					vscode.window.showErrorMessage("未登录，请重新加载")
+					return
+				}
+				let config = {
+        			headers: {
+            			"Content-Type": "multipart/form-data",
+						"Cookie":cookie,
+        			},
+    			};
+
+				await axios.post("https://www.qxgzone.com/api/admin/upload/pic",form,config).then(async res=> {
+					if (res.data.code == 0) {
+						// 上传成功
+						var path = "/static/img/upload/" + res.data.data;
+						var link = "https://www.qxgzone.com" + path;
+						var markdownlink = "![图片名称](" + link + ")";
+
+						const activeEditor = vscode.window.activeTextEditor
+    					if (activeEditor) {
+        					await activeEditor.insertSnippet(new vscode.SnippetString(markdownlink))
+    					}
+					}  else {
+						vscode.window.showErrorMessage(res.data.msg)
+					}
+				}).catch(err=>{
+					console.log(err);
+				})
+				if (deleteImg) {
+            		await vscode.workspace.fs.delete(url)
+				}
+        		p.report({ increment: 100 })
+        		return null;
+    		})
+	}
+
+
 
 	private closeFileIfOpen(file:vscode.Uri){
     	const tabs: vscode.Tab[] = vscode.window.tabGroups.all.map(tg => tg.tabs).flat();
@@ -440,7 +521,7 @@ export class ArticleTocExplorer {
     	if (index !== -1) {
         	vscode.window.tabGroups.close(tabs[index]);
     	}
-}
+	}
 
 	private  openResource(id:string,resource: vscode.Uri): void {
 		this.provider.loadFile(id).then(() => {

@@ -3,7 +3,7 @@ import { basename, dirname, join, resolve } from 'path';
 import axios from 'axios';
 import { endianness } from 'os';
 import { open, readFileSync } from 'fs';
-import { existsSync,mkdirSync, writeFileSync, promises as fsPromises } from 'fs';
+import { existsSync,mkdirSync, writeFileSync,statSync, promises as fsPromises } from 'fs';
 import getClipboardImage from './get_img_clipboard';
 import { globalCtx } from './globalctx';
 import fs = require('fs');
@@ -114,6 +114,7 @@ export class ArticleTocModel {
 		}
 		await axios.get("https://www.qxgzone.com/api/admin/article/get/"+id,config).then(res=> {
 			var content = res.data.data.content
+			var updateTime = res.data.data.update_time
 			var title = this.convertTitle(res.data.data.title,id)
 			var cat = res.data.data.catagory
 			if (!cat) {
@@ -133,6 +134,14 @@ export class ArticleTocModel {
 			console.log(articlePath)
 			if (!content) {
 				content = ""
+			}
+			// 判断是否需要写入，判断articlePath的数据更新时间与远程数据更新时间
+			var stat = statSync(articlePath);
+			if (stat) {
+				var fileUpdateTime = stat.mtime.getTime() / 1000;
+				if (fileUpdateTime > updateTime) {
+					return;
+				}
 			}
 			writeFileSync(articlePath,content)
 		})

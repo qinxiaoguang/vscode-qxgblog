@@ -2,7 +2,7 @@
   "name": "qxgblog",
   "displayName": "qxgblog",
   "description": "qxgblog",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": {"name": "qxg"},
   "engines": {
     "vscode": "^1.80.0"
